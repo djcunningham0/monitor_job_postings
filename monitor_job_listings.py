@@ -3,6 +3,10 @@ import utils
 
 
 class JobList:
+    """
+    This class contains methods used to report changes to job postings for any company. A subclass with a 'scrape'
+    method defined should be created for each website that will be scraped.
+    """
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) \
         Chrome/59.0.3071.115 Safari/537.36"}
@@ -23,13 +27,15 @@ class JobList:
         self.url = url
         self.soup = utils.get_soup(url=url, headers=self.headers)
         self.careers_link = careers_link
-        self.filepath = utils.format_filepath(self.folder, filename)
+        self.filepath = utils.format_csv_filepath(os.path.join(self.folder, filename))
         self.company_name = company_name
         self.scrape = scrape
         self.subject = company_name + " job postings"
 
     def run(self):
-
+        """
+        Scrape data and report any changes.
+        """
         if self.soup is not None:
             jobs, jobs_html, colnames = self.scrape()
 
@@ -41,6 +47,14 @@ class JobList:
             utils.write_csv(self.filepath, jobs, colnames)
 
     def report_changes(self, data, data_html, colnames):
+        """
+        Determine if any jobs have been added or removed since the last check. Report additions or deletions
+        by print report or email as specified.
+
+        :param data: jobs data returned from self.scrape()
+        :param data_html: jobs HTML data returned from self.scrape()
+        :param colnames: column names of jobs data
+        """
         adds, adds_html, deletes = utils.find_adds_deletes(filepath=self.filepath, data=data, data_html=data_html,
                                                            colnames=colnames)
 
@@ -90,6 +104,9 @@ class JobList:
 
 
 class StatsLLC(JobList):
+    """
+    Job scraper for STATS
+    """
     def __init__(self, only_chicago=True,
                  report_adds=True, report_deletes=True, print_report=True, email_report=True):
 
@@ -106,6 +123,11 @@ class StatsLLC(JobList):
         self.email_report = email_report
 
     def scrape(self):
+        """
+        Scrape the STATS job website.
+
+        :return: job data, job data with HTML formatting, and column names for job data
+        """
         sections = self.soup.find_all('section')
         jobs = []
         jobs_html = []
@@ -130,5 +152,6 @@ class StatsLLC(JobList):
         return jobs, jobs_html, colnames
 
 
+# run the report
 stats = StatsLLC(print_report=False)
 stats.run()

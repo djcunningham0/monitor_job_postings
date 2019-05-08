@@ -30,17 +30,30 @@ def get_soup(url, headers=None, verbose=True):
         return soup
 
 
-def format_filepath(folder, filename):
-    if folder[-1] != "/":
-        folder += "/"
+def format_csv_filepath(filepath):
+    """
+    Makes sure the file name ends in '.csv'
 
-    if filename[-4:] != ".csv":
-        filename += ".csv"
+    :param filepath: full file path for CSV file (string)
+    :return: full file path ending in '.csv'
+    """
+    if filepath[-4:] != ".csv":
+        filepath += ".csv"
 
-    return folder + filename
+    return filepath
 
 
 def find_adds_deletes(filepath, data, data_html, colnames):
+    """
+    Compare the scraped data with the last recorded data in a CSV file and check for differences to see if any jobs
+    were added or deleted.
+
+    :param filepath: file path of the CSV file (string)
+    :param data: scraped data with job information (list)
+    :param data_html: scraped data with job information to be displayed in HTML email (e.g., including hyperlinks)
+    :param colnames: names of the fields in 'data' to be used as column names in the email (list of strings)
+    :return: three lists of jobs data -- added jobs, added jobs with HTML formatting, and deleted jobs
+    """
     with open(filepath, 'r') as csvfile:
         reader = csv.reader(csvfile)
         csvrows = [row[0:len(colnames)] for row in reader]  # ignore the timestamp (last column)
@@ -58,22 +71,57 @@ def find_adds_deletes(filepath, data, data_html, colnames):
     return adds, adds_html, deletes
 
 
-def print_table(table, company_name, message_start):
-    print("\n" + message_start + (" for " + company_name) * (company_name != "") + ":\n")
-    print(table)
-    print("\n")
-
-
 def create_text_table(data, colnames):
+    """
+    Use the tabulate library to create a plain-text table of job data.
+
+    :param data: job data
+    :param colnames: names of fields in job data to be used as column names
+    :return: a plain-text table
+    """
     return tabulate(data, headers=colnames)
 
 
 def create_html_table(data, colnames):
+    """
+    Use the tabulate library to create an HTML table of job data.
+
+    :param data: job data
+    :param colnames: names of fields in job data to be used as column names
+    :return: an HTML table
+    """
     return tabulate(data, headers=colnames, tablefmt='html')
 
 
+def print_table(table, company_name, message_start=None):
+    """
+    Print job data to the console.
+
+    :param table: table of job data created using create_text_table or create_html_table
+    :param company_name: name of the company
+    :param message_start: message to display before printing the table (optional)
+    """
+    if message_start is not None and message_start != "":
+        print("\n" + message_start + (" for " + company_name) * (company_name != "") + ":\n")
+
+    print(table)
+    print("\n")
+
+
 def build_message(adds_table, adds_table_html, deletes_table, deletes_table_html,
-                  company_name, email_adds, email_deletes):
+                  company_name, email_adds=True, email_deletes=True):
+    """
+    Build the email message including added and removed jobs.
+
+    :param adds_table: table of added jobs created from create_text_table
+    :param adds_table_html: table of added jobs created from create_html_table
+    :param deletes_table: table of deleted jobs created from create_text_table
+    :param deletes_table_html: table of deleted jobs created from create_html_table
+    :param company_name: name of company
+    :param email_adds: True to include added jobs in the email
+    :param email_deletes: True to include deleted jobs in the email
+    :return: a plain-text email message and an HTML email message
+    """
     text_msg = ""
     html_msg = ""
 
@@ -105,6 +153,13 @@ def build_message(adds_table, adds_table_html, deletes_table, deletes_table_html
 
 
 def write_csv(filepath, data, colnames):
+    """
+    Write the jobs data to a CSV file which will be used to check for changes.
+
+    :param filepath: full filepath for CSV file
+    :param data: scraped jobs data
+    :param colnames: column names for the file
+    """
     # create the directory if it doesn't exist
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
@@ -124,12 +179,15 @@ def write_csv(filepath, data, colnames):
 
 ### Begin Gmail API utilities ###
 
+# A few helpful links for setting up the API:
 # https://developers.google.com/gmail/api/quickstart/python
 # https://developers.google.com/gmail/api/guides/sending
+
 def establish_service():
     """
-    Shows basic usage of the Gmail API.
-    Lists the user's Gmail labels.
+    Authorizes and establishes the Gmail service using the API.
+
+    :return: authorized Gmail service instance
     """
     # If modifying these scopes, delete the file token.pickle.
     SCOPES = ['https://www.googleapis.com/auth/gmail.send']
@@ -160,17 +218,14 @@ def establish_service():
 
 def create_message(sender, to, subject, message_text, message_html=None):
     """
-    Create a message for an email
+    Create a message for an email.
 
-    Args:
-    sender: Email address of the sender
-    to: Email address of the receiver
-    subject: The subject of the email message
-    message_text: The text of the email message
-    message_html: The HTML for the email message if sending an HTML email
-
-    Returns:
-    An object containing a base64url encoded email object.
+    :param sender: email address of the sender
+    :param to: email address of the recipient
+    :param subject: subject of the email
+    :param message_text: plain-text version of the email body
+    :param message_html: HTML version of the email body
+    :return: an object containing a base64url encoded email object
     """
     if message_html is not None:
         message = MIMEMultipart('alternative', None, [MIMEText(message_text), MIMEText(message_html, 'html')])
@@ -187,10 +242,9 @@ def send_message(service, user_id, message, verbose=False):
     """
     Send an email message.
 
-    :param service: Authorized Gmail API service instance.
-    :param user_id: User's email address. The special value "me" can be used to indicate the authenticated user.
-    :param message: Message to be sent.
-    :return:
+    :param service: authorized Gmail API service instance.
+    :param user_id: user's email address -- the special value "me" can be used to indicate the authenticated user.
+    :param message: message to be sent
     """
 
     try:

@@ -3,5 +3,3 @@
 __pycache__/
 credentials.json
 token.pickle
-job_list_files/
-old_files/
