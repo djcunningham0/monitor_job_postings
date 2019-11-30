@@ -110,8 +110,8 @@ class StatsLLC(JobList):
     def __init__(self, only_chicago=True,
                  report_adds=True, report_deletes=True, print_report=True, email_report=True):
 
-        super().__init__(url="https://www.hirebridge.com/v3/jobs/list.aspx?cid=7082&m=0",
-                         careers_link="https://www.stats.com/careers/",
+        super().__init__(url="https://recruit.hirebridge.com/v3/jobs/list.aspx?cid=7082&m=0",
+                         careers_link="https://www.statsperform.com/stats-careers/",
                          filename="stats_llc.csv",
                          company_name="STATS",
                          scrape=self.scrape)
@@ -153,5 +153,6 @@ class StatsLLC(JobList):
 
 
 # run the report
-stats = StatsLLC(print_report=False)
-stats.run()
+if __name__ == '__main__':
+    stats = StatsLLC(print_report=False)
+    stats.run()

@@ -13,5 +13,9 @@
     		<key>Minute</key> 
     		<integer>0</integer> 
 	</dict>
+	<key>StandardOutPath</key>
+	<string>/tmp/local.joblistings.out</string>
+	<key>StandardErrorPath</key>
+	<string>/tmp/local.joblistings.err</string>
     </dict>
 </plist>

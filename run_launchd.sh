@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# ** Make sure this script is executable! (chmod 744) **
+# ** Make sure this script is executable! (chmod a+x) **
 
 # launchd script is in /Users/Daniel/Library/LaunchAgents
 
